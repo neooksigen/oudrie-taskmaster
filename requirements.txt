@@ -1,0 +1,21 @@
+# Google Agent Development Kit (ADK) and GenAI SDK
+google-adk==2.7.1
+google-genai==2.18.1
+google-cloud-aiplatform==1.164.0
+
+# Google Cloud Services
+google-cloud-bigquery==3.43.0
+google-cloud-storage==3.13.1
+google-auth==2.56.3
+
+# Google Sheets and APIs
+gspread==6.2.1
+
+# MCP & Server (For FastMCP Tools)
+mcp==1.29.0
+fastmcp==3.4.7
+uvicorn==0.52.3
+
+# Data Science and Utilities
+pandas==3.0.5
+python-dotenv==1.2.3
