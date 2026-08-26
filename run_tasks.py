@@ -335,6 +335,20 @@ async def run_pipeline(args: list[str]):
         write_range = f"A{archive_start_row}"
         archive_sheet.update(range_name=write_range, values=archive_rows, value_input_option="USER_ENTERED")
         print(f"Successfully archived {len(archive_rows)} tasks into '{params['archive_task_gs_tab']}' starting at row {archive_start_row}.")
+
+        # Clear columns "Vertex AI Log", "Update Timestamp", "Approved (Yes/No)", "Feedback" in task_sheet (from row 2 to total_tasks + 1)
+        columns_to_clear = ["Vertex AI Log", "Update Timestamp", "Approved (Yes/No)", "Feedback"]
+        for col_name in columns_to_clear:
+            if col_name in col_map:
+                col_idx = col_map[col_name]
+                col_letter = col_num_to_letter(col_idx)
+                range_to_clear = f"{col_letter}2:{col_letter}{total_tasks + 1}"
+                print(f"Clearing column '{col_name}' in task sheet (range: {range_to_clear})...")
+                empty_values = [[""] for _ in range(total_tasks)]
+                task_sheet.update(range_name=range_to_clear, values=empty_values, value_input_option="USER_ENTERED")
+            else:
+                print(f"Warning: Column '{col_name}' not found in task sheet, skipping clear.")
+
         print("Pipeline execution completed successfully.")
         return
 
