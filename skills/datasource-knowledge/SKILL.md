@@ -42,7 +42,7 @@ Execute each incoming request using this precise sequence:
 ## Datasources Library
 
 ### 1. US Agriculture Census
-* **BigQuery Table Name**: `mfg-analytic-sandbox.PLAY_DR_APAC.v_c12a`
+* **BigQuery Table Name**: `kzxy-11239.monitoring.v_c12a`
 * **Schema Definition**:
   - `freq_desc`: The frequency at which the data is collected.
   - `sector_desc`: The broad sector/topic category (e.g., "ANIMALS & PRODUCTS", "CROPS", "DEMOGRAPHICS").
