@@ -7,12 +7,12 @@ Oudrie is Taskmaster, where user could put detailed steps and agent system adapt
 3. Open [Google Cloud Workbench](https://console.cloud.google.com/agent-platform/workbench/instances?project=kzxy-11239) then in one instance name "taskmaster-ignatiusandri" click "Open JupyterLab".
 4. In the Launcher menu, click Terminal.
 5. Paste this syntax into Terminal, then press Enter :
-gemini -p "run run_tasks  
+`gemini -p "run run_tasks  
 task_list_gs_url = https://docs.google.com/spreadsheets/d/1lmGAV-5JFeEzWy-nZ3o3SEZF49plo8bFPHUSbg_MnBc/, 
 task_list_gs_tab = 'Tasks', 
 archive_task_gs_url = https://docs.google.com/spreadsheets/d/1lmGAV-5JFeEzWy-nZ3o3SEZF49plo8bFPHUSbg_MnBc/, 
-archive_task_gs_tab = 'Archive Tasks'." --yolo
-The syntax explanation : task_list arguments are to inform the automation on which Google Sheet and tab containing the task list. archive_task arguments are to inform the automation which Google Sheet and tab to store completed approved tasks list, including Closing Timestamp. yolo is to instruct "don't wait for user review, just run run_task continuously until the end". So the automation behaves like automation, not chatting asking user for reviewing/approvals in the middle.
+archive_task_gs_tab = 'Archive Tasks'." --yolo`
+*The syntax explanation* : task_list arguments are to inform the automation on which Google Sheet and tab containing the task list. archive_task arguments are to inform the automation which Google Sheet and tab to store completed approved tasks list, including Closing Timestamp. yolo is to instruct "don't wait for user review, just run run_task continuously until the end". So the automation behaves like automation, not chatting asking user for reviewing/approvals in the middle.
 6. Oudrie will execute task one-by-one from task 001, until task 007. After task 007 finished, the automation stops. In tab "Tasks", column "Vertex AI Log" is filled by Oudrie to explain the handoffs, column "Update Timestamp" is filled when the task is finished. Then the automation stop.
 7. User check [tab "Result"](https://docs.google.com/spreadsheets/d/1lmGAV-5JFeEzWy-nZ3o3SEZF49plo8bFPHUSbg_MnBc/edit?gid=750890070#gid=750890070). That is where Oudrie delivers the tasks' results.
 8. For the good tasks, user write Yes in column "Approved (Yes/No)". But for the less good tasks needing rework, in tab "Tasks" don't hesitate to write No in column "Approved (Yes/No)" and put the feedback how Oudrie should improve in column "Feedback". For feedback, no need to write in multi-step details. Alternatively user could edit the steps in column "Task List" , perhaps there was typo in table name/wrong result location etc., then in column "Feedback" just write "Please re-run the task.".
