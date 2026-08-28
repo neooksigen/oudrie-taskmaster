@@ -18,6 +18,10 @@ from dotenv import load_dotenv
 # 1. Load Environment Variables (e.g. API keys, GCP credentials)
 load_dotenv()
 
+# Force Google GenAI SDK to use 'global' location as gemini-3.6-flash is hosted there on Vertex AI
+os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
+os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "true"
+
 try:
     from google.adk.agents.llm_agent import Agent
     from google.adk.runners import Runner
