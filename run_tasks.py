@@ -23,6 +23,10 @@ import gspread
 # Add workspace path to support imports if executed from sibling folders
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+# Force Google GenAI SDK to use 'global' location as gemini-3.7-flash is hosted there on Vertex AI
+os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
+os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "true"
+
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
@@ -71,7 +75,32 @@ def parse_pipeline_arguments(args: list[str]) -> dict:
         "archive_task_gs_tab": "Archive Tasks"
     }
 
-    full_args_str = " ".join(args)
+    # 1. Normalize args: if any arg contains '=', split it to separate key, '=', and value
+    normalized_args = []
+    for arg in args:
+        if "=" in arg:
+            k, v = arg.split("=", 1)
+            if k:
+                normalized_args.append(k.strip())
+            normalized_args.append("=")
+            if v:
+                normalized_args.append(v.strip())
+        else:
+            normalized_args.append(arg)
+
+    # 2. Quote any argument containing space to preserve it through join/regex matching
+    processed_args = []
+    for arg in normalized_args:
+        if " " in arg:
+            stripped = arg.strip()
+            if (stripped.startswith("'") and stripped.endswith("'")) or (stripped.startswith('"') and stripped.endswith('"')):
+                processed_args.append(arg)
+            else:
+                processed_args.append(f'"{arg}"')
+        else:
+            processed_args.append(arg)
+
+    full_args_str = " ".join(processed_args)
     # Regex captures: key = 'value' or key = "value" or key = value
     pattern = r'([a-zA-Z0-9_]+)\s*=\s*(?:\'([^\']*)\'|"([^"]*)"|([^\s,]+))'
     matches = re.findall(pattern, full_args_str)
@@ -80,6 +109,9 @@ def parse_pipeline_arguments(args: list[str]) -> dict:
         val = q1 or q2 or unq
         if val:
             # Clean up trailing comma, period, or quotes
+            val = val.strip().strip(",").strip(".")
+            # Strip any survived outer single or double quotes
+            val = val.strip("'").strip('"')
             val = val.strip().strip(",").strip(".")
             # Support both _trix_ and _gs_ parameter styles
             normalized_key = key.replace("_trix_", "_gs_")
@@ -270,6 +302,39 @@ async def run_pipeline(args: list[str]):
             write_cell(row_num, "Update Timestamp", current_time)
 
         print("\nAll tasks in the list have been executed. Stopping pipeline.")
+        return
+
+    # ==========================================================================
+    # FLOW 6: Partial run recovery. Some tasks have run (have Update Timestamp), 
+    # some have not run, and all tasks have no approval status yet.
+    # ==========================================================================
+    elif (ut_filled_count > 0) and (ut_blank_count > 0) and (blank_count == total_tasks):
+        print("Detected partially completed run with no user approval status yet.")
+        print(f"Resuming pipeline: {ut_filled_count} completed tasks will be skipped, and {ut_blank_count} pending tasks will be executed.")
+        
+        for idx, row in enumerate(records):
+            row_num = idx + 2  # 1-indexed, skipping header
+            task_no = row.get("No")
+            task_text = str(row.get("Task List (Prompt List)", "")).strip()
+            update_timestamp_val = str(row.get("Update Timestamp", "")).strip()
+
+            if update_timestamp_val:
+                print(f"Task {task_no} already executed on {update_timestamp_val}. Skipping.")
+                continue
+
+            print("-" * 60)
+            print(f"Executing Task {task_no}: '{task_text[:60]}...'")
+
+            # Execute the task via Agent Coordinator
+            summary_result = await run_coordinator_agent(task_text)
+
+            # Update the Update Timestamp and Vertex AI Log columns
+            current_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+            print(f"Writing Vertex AI Log and update timestamp to row {row_num}...")
+            write_cell(row_num, "Vertex AI Log", summary_result)
+            write_cell(row_num, "Update Timestamp", current_time)
+
+        print("\nAll remaining tasks in the list have been executed. Stopping pipeline.")
         return
 
     # ==========================================================================
