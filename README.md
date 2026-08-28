@@ -1,14 +1,38 @@
 # Oudrie
 Oudrie is Taskmaster, where user could put detailed steps and agent system adaptively execute to reach the user objective accurately. No more overloading skill context. The first use case here is BigQuery and Google Sheet task operation and completion. Especially BigQuery, not all roles in a organization have access to BigQuery. So through Oudrie, all user roles are able to analyze BigQuery tables then gain insight through Google Sheet autonomous operations. User also able to automate repetitive Google Sheet operations through Oudrie. 
 
-## How to Build from Scratch until Live
+## How to Build/Run from Scratch until Live in Cloud Run
 1. Register and sign in to [Google Cloud Platform](https://console.cloud.google.com/).
-2. Create new Project. And select that Project.
+2. Create new Project "kzxy-11239". And select that Project.
 3. Open [Workbench in Agent Platform](https://console.cloud.google.com/agent-platform/workbench/).
 4. Create new Instance. Wait for a while (around 3-5 minutes). Then after Instance is ready, click Open JupyterLab.
 5. In Launcher, click Gemini CLI. Ignore/delete the automatic untitled.ipynb created.
-6. Ask to Gemini CLI "please help me get credential.json file, type Service Account to get credentials : type, project_id, private_key_id, private_key, client_email, client_id, auth_uri https://accounts.google.com/o/oauth2/auth, token_uri https://oauth2.googleapis.com/token, auth_provider_x509_cert_url https://www.googleapis.com/oauth2/v1/certs, client_x509_cert_url, universe_domain googleapis.com". Then follow its instruction until get the file credentials.json. Finally put that credentials.json in JupyterLab. 
-7. Open [IAM Service Accounts](https://console.cloud.google.com/iam-admin/serviceaccounts). Note that client_email inside credentials.json is appearing in that IAM page. Go to column Action, click Manage Permission
+6. Ask to Gemini CLI "please help me get credential.json file, type Service Account to get credentials : type, project_id, private_key_id, private_key, client_email, client_id, auth_uri https://accounts.google.com/o/oauth2/auth, token_uri https://oauth2.googleapis.com/token, auth_provider_x509_cert_url https://www.googleapis.com/oauth2/v1/certs, client_x509_cert_url, universe_domain googleapis.com". Then follow its instruction until get the file credentials.json. Finally put that credentials.json in JupyterLab with file name kzxy_credentials.json. 
+7. Open [IAM Service Accounts](https://console.cloud.google.com/iam-admin/serviceaccounts). Note that client_email inside credentials.json is appearing in that IAM page. Go to column Action, then click Manage Permission, then click Manage Access. Then see role Agent Platform Express is already added. Then add another role, put BigQuery Job User. Then click Save. This is to ensure service account is able to execute SQL code.
+8. Open [BigQuery](https://console.cloud.google.com/bigquery). Click Dataset, then create new Dataset "Monitoring". Then open new SQL editor. Then paste this code : with 
+df1 as (
+  select freq_desc, 
+  #begin_code, end_code,
+  sector_desc, group_desc, commodity_desc, class_desc, 
+  #domain_desc, domaincat_desc, 
+  statisticcat_desc, /*aspect measured e.g. area harvested*/
+  unit_desc, /*measurement scale e.g. acre*/
+  sum(value) total_value 
+  from `bigquery-public-data.usda_nass_agriculture.census_2012` 
+  where freq_desc in ('ANNUAL') 
+  and sector_desc in ('ANIMALS & PRODUCTS','CROPS','DEMOGRAPHICS')
+  group by 1,2,3,4,5,6,7
+)
+select * from df1 order by 1,2,3,4,5,6,7 . Then click Save , then Save View then name it v_c12a.
+9. Open another new SQL editor then paste this code : select * from bigquery-public-data.iowa_liquor_sales.sales . Then click Save, then Save View then name it v_ilss.
+10. Type v_c12a inside Search for Resources. Press Enter. Then click 3 vertical dots, then click Open in New Tab. Then click Share. Then click Manage Permission. Then click Add Principal. Copy the client_email from credentials.json into New Principals field. Then in field Select a Role, choose BigQuery then select BigQuery Data Viewer. Then click Save. This is to ensure the Service Account could view the dataset and run SQL code using that dataset.
+11. Do the same point 10 for v_ilss.
+12. Open [Google Sheet Census 2012 US Agriculture](https://docs.google.com/spreadsheets/d/1lmGAV-5JFeEzWy-nZ3o3SEZF49plo8bFPHUSbg_MnBc/). Click Share at the top right corner. Put that client_email from credentials.json into field Add People. Assign as Editor. Then click Done. This is to ensure the Service Account is allowed to make real operation (write data, delete rows, insert rows etc) inside Google Sheet.
+13. Open [Billing](https://console.cloud.google.com/billing/). Add new billing account. This is to track AI cost, and to ensure AI could run. If you got 150 $ Google Cloud Credit, follow the simple instruction in Devpost email to redeem the code. Then go to Credits in the left tab. You will see the credits is added. Then all AI cost will be automatically charged to that credit.
+14. That's all for setting credentials, permissions, and datasets. Take a rest if you want.
+15. Then continue to JupyterLab. Put folder skills and sub-folders and files inside it together into JupyterLab.
+16. Put folder templates and 1 html file inside it together into JupyterLab.
+17. Put file agent_system.py, app.py, bigquery_tools.py, googlesheet_tools.py, requirements.txt, run_tasks.py 
 
 ## Simple Testing Instruction
 1. Open this Google Sheet [Census 2012 US Agriculture](https://docs.google.com/spreadsheets/d/1lmGAV-5JFeEzWy-nZ3o3SEZF49plo8bFPHUSbg_MnBc/edit?gid=1971765118#gid=1971765118).
