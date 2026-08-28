@@ -55,13 +55,19 @@ async def run_pipeline(
                 cwd=os.path.dirname(os.path.abspath(__file__))
             )
             
-            # Read stdout/stderr line-by-line and yield via SSE
+            # Read stdout/stderr line-by-line and yield via SSE.
+            # Use asyncio.wait_for to send periodic heartbeats if the process is silent,
+            # which prevents Google Front End (GFE) or proxies from dropping the connection as idle.
             while True:
-                line = await process.stdout.readline()
-                if not line:
-                    break
-                decoded_line = line.decode('utf-8', errors='replace').rstrip('\r\n')
-                yield f"data: {decoded_line}\n\n"
+                try:
+                    line = await asyncio.wait_for(process.stdout.readline(), timeout=15.0)
+                    if not line:
+                        break
+                    decoded_line = line.decode('utf-8', errors='replace').rstrip('\r\n')
+                    yield f"data: {decoded_line}\n\n"
+                except asyncio.TimeoutError:
+                    # SSE Comment (ignored by clients but keeps connection active)
+                    yield ": keep-alive\n\n"
             
             # Wait for process termination
             await process.wait()
@@ -70,6 +76,15 @@ async def run_pipeline(
             
         except Exception as e:
             yield f"data: [ERROR] Failed to execute pipeline: {str(e)}\n\n"
+        finally:
+            # AUTOMATIC CLEANUP: If the user disconnects or closes the tab,
+            # terminate the active pipeline subprocess immediately.
+            if 'process' in locals() and process.returncode is None:
+                try:
+                    process.terminate()
+                    await process.wait()
+                except Exception:
+                    pass
 
     return StreamingResponse(log_stream(), media_type="text/event-stream")
 
