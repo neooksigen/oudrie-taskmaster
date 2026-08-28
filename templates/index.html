@@ -196,6 +196,18 @@
             color: var(--text-color);
         }
 
+        .btn-danger {
+            background-color: transparent;
+            border: 1px solid var(--error-color);
+            color: var(--error-color);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background-color: rgba(217, 48, 37, 0.05);
+            color: #b02318;
+            border-color: #b02318;
+        }
+
         /* Live Terminal Box */
         .terminal-container {
             background-color: var(--terminal-bg);
@@ -317,6 +329,7 @@
                 <strong>Oudrie Rules:</strong>
                 <ul>
                     <li>If "Approved" column contains pending/blank statuses, Oudrie stops to ask for complete reviews.</li>
+                    <li>If some tasks have already run (have timestamps) but others are pending, with no approval status, Oudrie resumes by executing only the pending ones.</li>
                     <li>If tasks are fully reviewed and some are rejected ("No"), Oudrie runs on only the rejected ones with feedback.</li>
                     <li>If all tasks are approved ("Yes"), Oudrie archives and clears them for the next batch.</li>
                 </ul>
@@ -354,6 +367,7 @@
                 </div>
 
                 <div class="btn-container">
+                    <button type="button" id="stop-btn" class="btn btn-danger" style="display: none;">Stop Pipeline</button>
                     <button type="button" id="clear-console-btn" class="btn btn-secondary">Clear Console</button>
                     <button type="submit" id="submit-btn" class="btn btn-primary">
                         <span class="spinner"></span>
@@ -385,12 +399,23 @@
         const form = document.getElementById('pipeline-form');
         const submitBtn = document.getElementById('submit-btn');
         const btnText = document.getElementById('btn-text');
+        const stopBtn = document.getElementById('stop-btn');
         const clearBtn = document.getElementById('clear-console-btn');
         const consoleBody = document.getElementById('terminal-body');
+
+        let activeEventSource = null;
 
         // Clean console logs
         clearBtn.addEventListener('click', () => {
             consoleBody.innerHTML = '<div class="log-line">Console cleared.</div>';
+        });
+
+        // Stop Pipeline Button
+        stopBtn.addEventListener('click', () => {
+            if (activeEventSource) {
+                appendLogLine('[INFO] Stop requested by user. Terminating connection...', 'error');
+                closeConnection(activeEventSource);
+            }
         });
 
         // Form Submit to Stream Logs
@@ -401,6 +426,7 @@
             submitBtn.classList.add('loading');
             submitBtn.disabled = true;
             btnText.textContent = "Pipeline Running...";
+            stopBtn.style.display = 'inline-flex'; // Show Stop button
             disableFormInputs(true);
 
             // Fetch and encode form params
@@ -415,18 +441,18 @@
 
             // Construct Server-Sent Events source
             const sseUrl = `/run?task_list_gs_url=${taskListUrl}&task_list_gs_tab=${taskListTab}&archive_task_gs_url=${archiveUrl}&archive_task_gs_tab=${archiveTab}`;
-            const eventSource = new EventSource(sseUrl);
+            activeEventSource = new EventSource(sseUrl);
 
-            eventSource.onmessage = (event) => {
+            activeEventSource.onmessage = (event) => {
                 const line = event.data;
                 
                 // If SSE returns empty or process termination signal, close stream
                 if (line.includes('[SUCCESS]') || line.includes('[PROCESS COMPLETED]')) {
                     appendLogLine(line, 'success');
-                    closeConnection(eventSource);
+                    closeConnection(activeEventSource);
                 } else if (line.includes('[ERROR]') || line.includes('Failed to authenticate') || line.includes('[BLOCKED]')) {
                     appendLogLine(line, 'error');
-                    closeConnection(eventSource);
+                    closeConnection(activeEventSource);
                 } else if (line.includes('[INFO]') || line.includes('STARTING TASK')) {
                     appendLogLine(line, 'info');
                 } else {
@@ -434,9 +460,9 @@
                 }
             };
 
-            eventSource.onerror = (err) => {
+            activeEventSource.onerror = (err) => {
                 appendLogLine('Connection interrupted or completed.', 'info');
-                closeConnection(eventSource);
+                closeConnection(activeEventSource);
             };
         });
 
@@ -473,9 +499,13 @@
             if (eventSource) {
                 eventSource.close();
             }
+            if (eventSource === activeEventSource) {
+                activeEventSource = null;
+            }
             submitBtn.classList.remove('loading');
             submitBtn.disabled = false;
             btnText.textContent = "Oudrie, Please Execute !";
+            stopBtn.style.display = 'none'; // Hide Stop button
             disableFormInputs(false);
         }
 
