@@ -38,7 +38,24 @@ select * from df1 order by 1,2,3,4,5,6,7 . Then click Save , then Save View then
 20. Still inside Gemini CLI. Ask "Please help me to register skill agent-coordination, bigquery, datasource-knowledge, googlesheet into gemini skills. Currently there are x (from point 19) skills (by running /skills). So after these 4 skills registered, /skills will have x + 4 = y skills !". Then follow the installation process, usually simply choose Allow Once to continue, until installation finish.
 21. Still inside Gemini CLI. Ask "Please help me to register bigquery_tools.py and googlesheet_tools.py as gemini mcp servers. Currently there are 3 mcp servers (gcloud, observability, vertexmcpserver) registered (by running /mcp), and registered mcp server location is in here /home/jupyter/.gemini/extensions/. So after those 2 mcp are registered, /mcp will have 3 + 2 = 5 mcp ! So in /home/jupyter/.gemini/extensions/ , there will be gcloud, observability, vertexmcpserver, bigquery_tools,googlesheet_tools !" Then follow the installation process, usually simply choose Allow Once to continue, until installation finish.
 22. Reload/refresh the tab. Launch Gemini CLI again. Then type /skills and Enter to check whether 4 skills are installed. Then type /mcp and Enter to check whether bigquery-tools and googlesheet-tools (note that for mcp, _ automatically change to -, but agent will still call original function with _) are installed. These skills and mcp installation are important, otherwise Oudrie will hallucinate creating tools on its own, or cannot run.
-23. In Gemini CLI ask "please help me to create Cloud Run, so the web app based on file index.html could run using Cloud Run". In the 
+23. In Gemini CLI ask "please help to create .env file which contain these : GOOGLE_GENAI_USE_VERTEXAI=TRUE
+GOOGLE_CLOUD_PROJECT="kzxy-11239"
+GOOGLE_CLOUD_LOCATION="us-central1"
+GOOGLE_APPLICATION_CREDENTIALS="kzxy_credentials.json"
+24. In Gemini CLI ask "please help me to create Cloud Run, so the web app based on file index.html could run using Cloud Run". Then Gemini will create dockerfile to containerize all mcp, skills, codes, Python packages. And also Gemini will make new resource in Cloud Run called task-pipeline-web.
+25. Then Gemini will provide instruction to be executed manually by you (Cloud Run Deployment.md).
+26. To be direct to point, in JupyterLab launch Terminal. Then run this syntax : gcloud config set project kzxy-11239
+27. In the same Terminal, run this syntax to deploy Cloud Run and create web app : gcloud run deploy task-pipeline-web \
+      --source . \
+      --region us-central1 \
+      --timeout=30m \
+      --no-cpu-throttling \
+      --min-instances=1 \
+      --allow-unauthenticated . While it will also assign the other Service Account (xxx-compute@developer.gserviceaccount.com, seen in Workbench) to maintain Cloud Run.
+28. The successful Cloud Run deployment will have this message in Terminal : Service [task-pipeline-web] revision [task-pipeline-web-00001] has been deployed and is serving 100% of traffic.
+Service URL: https://task-pipeline-web-xxxxxxx-uc.a.run.app
+29. Don't yet try the web app. First go to [Cloud Run](https://console.cloud.google.com/run/). Then click Active Cloud Shell icon (beside Gemini icon) in top right corner. Then run this syntax gcloud beta run services add-iam-policy-binding --region=us-central1 --member=allUsers --role=roles/run.invoker task-pipeline-web . Then close Cloud Shell. Then click resource task-pipeline-web, go to tab Security, then ensure Authentication = Allow Public Access, then ok/save. This is to ensure Cloud Run is able to be triggered by public (later on, restrict to certain account).
+30. Open the Cloud Run web app : Oudrie Taskmaster https://task-pipeline-web-144787238689.us-central1.run.app/ . The Google Sheet task and archive tasks tabs are already filled in. Then simply click 1 button "Oudrie, Please Execute!" to execute all tasks in [tab "Tasks"](https://docs.google.com/spreadsheets/d/1lmGAV-5JFeEzWy-nZ3o3SEZF49plo8bFPHUSbg_MnBc/edit?gid=1971765118#gid=1971765118) through Cloud Run.
 
 ## Simple Testing Instruction
 1. Open this Google Sheet [Census 2012 US Agriculture](https://docs.google.com/spreadsheets/d/1lmGAV-5JFeEzWy-nZ3o3SEZF49plo8bFPHUSbg_MnBc/edit?gid=1971765118#gid=1971765118).
