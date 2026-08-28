@@ -92,11 +92,11 @@ archive_task_gs_tab = 'Archive Tasks'." --yolo`
  
 ## Current Plus Minus between 2 Different Testing Methods
 A. With Cloud Run
-+ : Simple, only click 1 button to trigger automation running.
-+ : Web app is accessible by wide audience, and automation is able to triggered by wide audience also.
-- : Sometimes Cloud Run have loss connection/interupted connection, due to resource exhausted (which is not related to code error). So after some tasks are finished (or few times in middle of the task), Cloud Run stop. In the future Cloud Run configs will be enhanced to prevent this problem.
+😃 : Simple, only click 1 button to trigger automation running.
+😃 : Web app is accessible by wide audience, and automation is able to triggered by wide audience also.
+😑 : Sometimes Cloud Run have loss connection/interupted connection, due to resource exhausted (which is not related to code error). So after some tasks are finished (or few times in middle of the task), Cloud Run stop. In the future Cloud Run configs will be enhanced to prevent this problem.
 
 B. With Workbench Terminal (run syntax)
-+ : So far all 7 tasks are always completed within only 1 single run syntax.
-- : The UI Terminal and syntax look too technical. Some users may not want to use it.
-- : Often only certain roles (e.g. engineer, data analyst/scientist, IT) in organization have legitimate access to Google Cloud Platform. Other non-technical roles like business/product team might not have access, so they cannot access Workbench Terminal.
+😃 : So far all 7 tasks are always completed within only 1 single run syntax.
+😱 : The UI Terminal and syntax look too technical. Some users may not want to use it.
+😑 : Often only certain roles (e.g. engineer, data analyst/scientist, IT) in organization have legitimate access to Google Cloud Platform. Other non-technical roles like business/product team might not have access, so they cannot access Workbench Terminal.
