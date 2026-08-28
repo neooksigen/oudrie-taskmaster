@@ -32,7 +32,12 @@ select * from df1 order by 1,2,3,4,5,6,7 . Then click Save , then Save View then
 14. That's all for setting credentials, permissions, and datasets. Take a rest if you want.
 15. Then continue to JupyterLab. Put folder skills and sub-folders and files inside it together into JupyterLab.
 16. Put folder templates and 1 html file inside it together into JupyterLab.
-17. Put file agent_system.py, app.py, bigquery_tools.py, googlesheet_tools.py, requirements.txt, run_tasks.py 
+17. Put file agent_system.py, app.py, bigquery_tools.py, googlesheet_tools.py, requirements.txt, run_tasks.py inside JupyterLab.
+18. Go back to Gemini CLI. Ask "please help to install all Python packages inside requirements.txt". Then during installation process, choose Allow Once to continue, until installation finish.
+19. Still inside Gemini CLI. Type /skills then press Enter. This is to know how many Skills are currently installed.
+20. Still inside Gemini CLI. Ask "Please help me to register skill agent-coordination, bigquery, datasource-knowledge, googlesheet into gemini skills. Currently there are x (from point 19) skills (by running /skills). So after these 4 skills registered, /skills will have x + 4 = y skills !". Then follow the installation process, usually simply choose Allow Once to continue, until installation finish.
+21. Still inside Gemini CLI. Ask "Please help me to register bigquery_tools.py and googlesheet_tools.py as gemini mcp servers. Currently there are 3 mcp servers (gcloud, observability, vertexmcpserver) registered (by running /mcp), and registered mcp server location is in here /home/jupyter/.gemini/extensions/. So after those 2 mcp are registered, /mcp will have 3 + 2 = 5 mcp ! So in /home/jupyter/.gemini/extensions/ , there will be gcloud, observability, vertexmcpserver, bigquery_tools,googlesheet_tools !" Then follow the installation process, usually simply choose Allow Once to continue, until installation finish.
+22. Reload/refresh the tab. Launch Gemini CLI again. Then type /skills and check whether 4 skills are installed. Then type /mcp and c
 
 ## Simple Testing Instruction
 1. Open this Google Sheet [Census 2012 US Agriculture](https://docs.google.com/spreadsheets/d/1lmGAV-5JFeEzWy-nZ3o3SEZF49plo8bFPHUSbg_MnBc/edit?gid=1971765118#gid=1971765118).
